@@ -80,6 +80,10 @@ public class EntityMessageParser {
             }
         }
 
+        if (objectId.isEmpty()) {
+            objectId = computeObjectId(name);
+        }
+
         // Build final entity ID: domain-object_id
         String entityId = domain + "-" + objectId;
         result.put("id", entityId);
@@ -403,6 +407,23 @@ public class EntityMessageParser {
             case 10 -> m.put("requires_code", r.readBool());
             default -> r.skipField(wireType);
         }
+    }
+
+    private static String computeObjectId(String name) {
+        // ESPHome uses entity names as the fallback object ID for API 1.14+.
+        var objectId = new StringBuilder(name.length());
+        name.codePoints().forEach(c -> {
+            if (c == ' ') {
+                objectId.append('_');
+            } else if (c >= 'A' && c <= 'Z') {
+                objectId.append((char) (c + ('a' - 'A')));
+            } else if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-') {
+                objectId.appendCodePoint(c);
+            } else {
+                objectId.append('_');
+            }
+        });
+        return objectId.toString();
     }
 
     // ---- State response parsers ----
