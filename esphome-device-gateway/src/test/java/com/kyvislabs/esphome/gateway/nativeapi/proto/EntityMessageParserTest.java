@@ -150,4 +150,24 @@ class EntityMessageParserTest {
         assertEquals("sensor", result.get("domain"));
         assertEquals(23.5, (double) result.get("value"), 0.001);
     }
+
+    @Test
+    void parseSensorListEntities_computesDistinctIdsWhenObjectIdsAreOmitted() {
+        var frequencyX = new ProtobufWriter();
+        frequencyX.writeFixed32Field(2, 68);
+        frequencyX.writeStringField(3, "Frequency X");
+
+        var frequencyZ = new ProtobufWriter();
+        frequencyZ.writeFixed32Field(2, 70);
+        frequencyZ.writeStringField(3, "Frequency Z");
+
+        HashMap<String, Object> frequencyXEntity = EntityMessageParser.parseListEntities(
+                MessageTypes.LIST_ENTITIES_SENSOR_RESPONSE, frequencyX.toByteArray());
+        HashMap<String, Object> frequencyZEntity = EntityMessageParser.parseListEntities(
+                MessageTypes.LIST_ENTITIES_SENSOR_RESPONSE, frequencyZ.toByteArray());
+
+        assertEquals("sensor-frequency_x", frequencyXEntity.get("id"));
+        assertEquals("sensor-frequency_z", frequencyZEntity.get("id"));
+        assertNotEquals(frequencyXEntity.get("id"), frequencyZEntity.get("id"));
+    }
 }
